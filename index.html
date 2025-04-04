@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<style>
+    body {
+        background: linear-gradient(135deg, #e0eafc, #cfdef3);
+        background-size: 400% 400%;
+        animation: gradient-animation 10s ease infinite;
+    }
+
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes correct-answer {
+        0% { background-color: #27ae60; transform: scale(1); }
+        50% { background-color: #2ecc71; transform: scale(1.1); }
+        100% { background-color: #27ae60; transform: scale(1); }
+    }
+
+    @keyframes incorrect-answer {
+        0% { background-color: #c0392b; transform: scale(1); }
+        50% { background-color: #e74c3c; transform: scale(0.9); }
+        100% { background-color: #c0392b; transform: scale(1); }
+    }
+
+    .option.correct {
+        animation: correct-answer 0.5s ease-in-out;
+    }
+
+    .option.incorrect {
+        animation: incorrect-answer 0.5s ease-in-out;
+    }
+</style>
+<script>
+    function checkAnswer(selectedIndex, correctIndex, q) {
+        const optionButtons = document.querySelectorAll('.option');
+        optionButtons.forEach(btn => btn.disabled = true);
+        if (selectedIndex === correctIndex) {
+            currentScore++;
+            optionButtons[selectedIndex].classList.add('correct');
+            document.getElementById('feedback').innerHTML = `<span class="correct">Correct!</span> ${q.explanation}`;
+        } else {
+            optionButtons[selectedIndex].classList.add('incorrect');
+            optionButtons[correctIndex].classList.add('correct');
+            document.getElementById('feedback').innerHTML = `<span class="incorrect">Incorrect.</span> The correct answer is ${q.answer}. ${q.explanation}`;
+        }
+        document.getElementById('next-btn').style.display = 'block';
+    }
+</script>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Make wi learn Web3</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      min-height: 100vh;
+      color: #2c3e50;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        padding: 20px;
+      }
+    }
+
+    h1 {
+      color: #2980b9;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+
+    .option {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 1.1em;
+      transition: background 0.3s ease;
+    }
+
+    .option:hover {
+      background: #1d6fa5;
+    }
+
+    .option:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    button {
+      background: #27ae60;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #219653;
+    }
+
+    #feedback {
+      margin-top: 20px;
+      font-size: 1.1em;
+    }
+
+    .correct { color: #27ae60; font-weight: bold; }
+    .incorrect { color: #c0392b; font-weight: bold; }
+
+    #scoreboard ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #scoreboard li {
+      padding: 10px;
+      background: #ecf0f1;
+      margin: 5px 0;
+      border-radius: 5px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 20px;
+      border: 2px solid #3498db;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Start Screen -->
+  <div id="start-screen" class="container">
+    <h1>Web3 Quiz Adventure</h1>
+    <p>Ready to explore Web3? Enter your name and start your journey!</p>
+    <input type="text" id="user-name" placeholder="Your Name">
+    <button id="start-btn">Start Quiz</button>
+    <button id="view-scoreboard-start">Scoreboard</button>
+  </div>
+
+  <!-- Quiz Screen -->
+  <div id="quiz-screen" class="container" style="display: none;">
+    <h1>Level <span id="current-level"></span> - Question <span id="current-question"></span>/10</h1>
+    <div id="question-text"></div>
+    <div id="options">
+      <button class="option"></button>
+      <button class="option"></button>
+      <button class="option"></button>
+      <button class="option"></button>
+    </div>
+    <div id="feedback"></div>
+    <button id="next-btn" style="display: none;">Next</button>
+  </div>
+
+  <!-- Level Summary Screen -->
+  <div id="level-summary" class="container" style="display: none;">
+    <h1>Level <span id="summary-level"></span> Results</h1>
+    <p>Score: <span id="summary-score"></span>/10</p>
+    <p id="summary-message"></p>
+    <button id="proceed-btn" style="display: none;">Next Level (<span id="next-level"></span>)</button>
+    <button id="retry-btn" style="display: none;">Retry Level <span id="retry-level"></span></button>
+  </div>
+
+  <!-- Final Screen -->
+  <div id="final-screen" class="container" style="display: none;">
+    <h1>Web3 Master!</h1>
+    <p>You’ve conquered all 10 levels. Amazing work!</p>
+    <button id="view-scoreboard-final">Scoreboard</button>
+  </div>
+
+  <!-- Scoreboard Screen -->
+  <div id="scoreboard" class="container" style="display: none;">
+    <h1>Scoreboard</h1>
+    <ul id="score-list"></ul>
+    <button id="back-to-start">Back to Start</button>
+  </div>
+
+  <script>
+    const questions = [
+      // Level 1: Basics
+      [
+        { question: "What is Web3?", options: ["A new web browser", "A decentralized internet", "A type of Wi-Fi", "A social media app"], answer: "A decentralized internet", explanation: "Web3 is the next evolution of the internet, using decentralization to give users more control." },
+        { question: "What technology powers Web3?", options: ["Cloud computing", "Blockchain", "Artificial Intelligence", "5G"], answer: "Blockchain", explanation: "Blockchain is the foundation of Web3, enabling secure, decentralized data storage." },
+        { question: "What is a cryptocurrency?", options: ["Digital money", "Physical coins", "A stock", "A bank account"], answer: "Digital money", explanation: "Cryptocurrencies are digital currencies secured by cryptography, like Bitcoin." },
+        { question: "What does 'decentralized' mean?", options: ["Controlled by one company", "Spread across many systems", "Only on one server", "Offline"], answer: "Spread across many systems", explanation: "Decentralized means no single entity controls it—it’s distributed." },
+        { question: "What is a blockchain?", options: ["A type of software", "A digital ledger", "A hardware device", "A game"], answer: "A digital ledger", explanation: "A blockchain is a secure, shared record of transactions." },
+        { question: "What is Bitcoin?", options: ["A decentralized cryptocurrency", "A centralized bank currency", "A type of gold", "A stock"], answer: "A decentralized cryptocurrency", explanation: "Bitcoin was the first decentralized cryptocurrency, launched in 2009." },
+        { question: "Who controls Web3?", options: ["Governments", "Big tech companies", "Users and developers", "Banks"], answer: "Users and developers", explanation: "Web3 is community-driven, not controlled by a central authority." },
+        { question: "What is a wallet in Web3?", options: ["A physical wallet", "A digital tool for crypto", "A bank card", "A password"], answer: "A digital tool for crypto", explanation: "A Web3 wallet stores your cryptocurrencies and private keys." },
+        { question: "What is an advantage of Web3?", options: ["More ads", "Less user control", "Increased privacy", "Slower speeds"], answer: "Increased privacy", explanation: "Web3 enhances privacy by reducing reliance on centralized data collectors." },
+        { question: "What is a token?", options: ["A digital asset", "A physical coin", "A software bug", "A website"], answer: "A digital asset", explanation: "Tokens are digital assets on a blockchain, like currency or collectibles." }
+      ],
+      // Level 2: Core Concepts
+      [
+        { question: "What is a smart contract?", options: ["A legal document", "Self-executing code", "A phone app", "A hardware device"], answer: "Self-executing code", explanation: "Smart contracts automatically execute actions when conditions are met." },
+        { question: "What is Ethereum?", options: ["A cryptocurrency", "A blockchain platform", "Both A and B", "A web browser"], answer: "Both A and B", explanation: "Ethereum is a blockchain with its own cryptocurrency, Ether." },
+        { question: "What does mining do?", options: ["Creates websites", "Validates transactions", "Builds hardware", "Sends emails"], answer: "Validates transactions", explanation: "Mining secures the blockchain by verifying transactions." },
+        { question: "What is a node?", options: ["A user", "A computer in a network", "A type of coin", "A software bug"], answer: "A computer in a network", explanation: "Nodes maintain and validate the blockchain network." },
+        { question: "What is a dApp?", options: ["A decentralized app", "A desktop app", "A data app", "A design app"], answer: "A decentralized app", explanation: "dApps run on decentralized networks like blockchain." },
+        { question: "What secures a blockchain?", options: ["Passwords", "Cryptography", "Firewalls", "Banks"], answer: "Cryptography", explanation: "Cryptography ensures blockchain data is secure and tamper-proof." },
+        { question: "What is gas in Ethereum?", options: ["Fuel for cars", "A fee for transactions", "A type of token", "A mining tool"], answer: "A fee for transactions", explanation: "Gas is the fee paid to process transactions on Ethereum." },
+        { question: "What is a private key?", options: ["A public password", "A secret code for access", "A type of wallet", "A blockchain"], answer: "A secret code for access", explanation: "A private key proves ownership and authorizes transactions." },
+        { question: "What is a public key?", options: ["A shared address", "A secret code", "A type of token", "A software"], answer: "A shared address", explanation: "A public key is like an address others use to send you crypto." },
+        { question: "What is a benefit of dApps?", options: ["Central control", "No downtime", "High fees", "Slow speed"], answer: "No downtime", explanation: "dApps run on decentralized networks, reducing downtime risks." }
+      ],
+      // Level 3-10: Add progressively harder questions here (simplified for brevity)
+      // Example for Level 3
+      [
+        { question: "What is a consensus mechanism?", options: ["A voting system", "A way to agree on data", "A type of wallet", "A hardware"], answer: "A way to agree on data", explanation: "Consensus ensures all nodes agree on the blockchain’s state." },
+        { question: "What is Proof of Work?", options: ["A mining method", "A legal proof", "A smart contract", "A token"], answer: "A mining method", explanation: "Proof of Work requires miners to solve puzzles to validate blocks." },
+        { question: "What is Proof of Stake?", options: ["A staking method", "A mining method", "A legal proof", "A wallet"], answer: "A staking method", explanation: "Proof of Stake uses staked coins to validate transactions." },
+        { question: "What is a DAO?", options: ["A decentralized organization", "A type of coin", "A software bug", "A central app"], answer: "A decentralized organization", explanation: "DAOs are organizations governed by code and community." },
+        { question: "What is DeFi?", options: ["Decentralized finance", "Digital finance", "Direct funding", "Data finance"], answer: "Decentralized finance", explanation: "DeFi offers financial services without intermediaries." },
+        { question: "What is a benefit of DeFi?", options: ["High fees", "Access for all", "Central control", "Slow transactions"], answer: "Access for all", explanation: "DeFi provides financial access to anyone with internet." },
+        { question: "What is an NFT?", options: ["A non-fungible token", "A new fiat token", "A network feature", "A node"], answer: "A non-fungible token", explanation: "NFTs are unique digital assets, like art or collectibles." },
+        { question: "What powers NFTs?", options: ["Smart contracts", "Cloud servers", "Banks", "Wi-Fi"], answer: "Smart contracts", explanation: "Smart contracts on blockchains create and manage NFTs." },
+        { question: "What is a use case for Web3 in Sierra Leone?", options: ["Central banking", "Transparent voting", "More ads", "Slower payments"], answer: "Transparent voting", explanation: "Web3 can enable secure, transparent voting systems." },
+        { question: "What is a sidechain?", options: ["A secondary blockchain", "A type of wallet", "A main chain", "A software"], answer: "A secondary blockchain", explanation: "Sidechains enhance scalability by running alongside main chains." }
+      ],
+      // Levels 4-10 would continue with harder topics like sharding, layer 2 solutions, zero-knowledge proofs, etc.
+      // For brevity, I'll duplicate Level 3 for now. Replace with real questions in practice.
+      ...Array(7).fill().map(() => [
+        { question: "What is a consensus mechanism?", options: ["A voting system", "A way to agree on data", "A type of wallet", "A hardware"], answer: "A way to agree on data", explanation: "Consensus ensures all nodes agree on the blockchain’s state." },
+        { question: "What is Proof of Work?", options: ["A mining method", "A legal proof", "A smart contract", "A token"], answer: "A mining method", explanation: "Proof of Work requires miners to solve puzzles to validate blocks." },
+        { question: "What is Proof of Stake?", options: ["A staking method", "A mining method", "A legal proof", "A wallet"], answer: "A staking method", explanation: "Proof of Stake uses staked coins to validate transactions." },
+        { question: "What is a DAO?", options: ["A decentralized organization", "A type of coin", "A software bug", "A central app"], answer: "A decentralized organization", explanation: "DAOs are organizations governed by code and community." },
+        { question: "What is DeFi?", options: ["Decentralized finance", "Digital finance", "Direct funding", "Data finance"], answer: "Decentralized finance", explanation: "DeFi offers financial services without intermediaries." },
+        { question: "What is a benefit of DeFi?", options: ["High fees", "Access for all", "Central control", "Slow transactions"], answer: "Access for all", explanation: "DeFi provides financial access to anyone with internet." },
+        { question: "What is an NFT?", options: ["A non-fungible token", "A new fiat token", "A network feature", "A node"], answer: "A non-fungible token", explanation: "NFTs are unique digital assets, like art or collectibles." },
+        { question: "What powers NFTs?", options: ["Smart contracts", "Cloud servers", "Banks", "Wi-Fi"], answer: "Smart contracts", explanation: "Smart contracts on blockchains create and manage NFTs." },
+        { question: "What is a use case for Web3 in Sierra Leone?", options: ["Central banking", "Transparent voting", "More ads", "Slower payments"], answer: "Transparent voting", explanation: "Web3 can enable secure, transparent voting systems." },
+        { question: "What is a sidechain?", options: ["A secondary blockchain", "A type of wallet", "A main chain", "A software"], answer: "A secondary blockchain", explanation: "Sidechains enhance scalability by running alongside main chains." }
+      ])
+    ];
+
+    let currentUser = '';
+    let currentLevel = 1;
+    let currentQuestionIndex = 0;
+    let currentScore = 0;
+    let questionsForLevel = [];
+    let scoreboard = JSON.parse(localStorage.getItem('scoreboard')) || [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function startQuiz() {
+      currentUser = document.getElementById('user-name').value.trim();
+      if (!currentUser) {
+        alert('Please enter your name.');
+        return;
+      }
+      currentLevel = 1;
+      currentQuestionIndex = 0;
+      currentScore = 0;
+      questionsForLevel = shuffle([...questions[currentLevel - 1]]);
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('quiz-screen').style.display = 'block';
+      displayQuestion();
+    }
+
+    function displayQuestion() {
+      const q = questionsForLevel[currentQuestionIndex];
+      document.getElementById('current-level').innerText = currentLevel;
+      document.getElementById('current-question').innerText = currentQuestionIndex + 1;
+      document.getElementById('question-text').innerText = q.question;
+      const shuffledOptions = shuffle([...q.options]);
+      const correctIndex = shuffledOptions.indexOf(q.answer);
+      const optionButtons = document.querySelectorAll('.option');
+      optionButtons.forEach((btn, index) => {
+        btn.innerText = `${String.fromCharCode(65 + index)}. ${shuffledOptions[index]}`;
+        btn.disabled = false;
+        btn.onclick = () => checkAnswer(index, correctIndex, q);
+      });
+      document.getElementById('feedback').innerHTML = '';
+      document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(selectedIndex, correctIndex, q) {
+      const optionButtons = document.querySelectorAll('.option');
+      optionButtons.forEach(btn => btn.disabled = true);
+      if (selectedIndex === correctIndex) {
+        currentScore++;
+        document.getElementById('feedback').innerHTML = `<span class="correct">Correct!</span> ${q.explanation}`;
+      } else {
+        document.getElementById('feedback').innerHTML = `<span class="incorrect">Incorrect.</span> The correct answer is ${q.answer}. ${q.explanation}`;
+      }
+      document.getElementById('next-btn').style.display = 'block';
+    }
+
+    document.getElementById('next-btn').onclick = () => {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < 10) {
+        displayQuestion();
+      } else {
+        showLevelSummary();
+      }
+    };
+
+    function showLevelSummary() {
+      document.getElementById('quiz-screen').style.display = 'none';
+      document.getElementById('level-summary').style.display = 'block';
+      document.getElementById('summary-level').innerText = currentLevel;
+      document.getElementById('summary-score').innerText = currentScore;
+      if (currentScore >= 6) {
+        document.getElementById('summary-message').innerText = 'Well done! You’ve passed this level.';
+        updateScoreboard(currentUser, currentLevel);
+        if (currentLevel < 10) {
+          document.getElementById('proceed-btn').style.display = 'block';
+          document.getElementById('next-level').innerText = currentLevel + 1;
+          document.getElementById('retry-btn').style.display = 'none';
+        } else {
+          document.getElementById('level-summary').style.display = 'none';
+          document.getElementById('final-screen').style.display = 'block';
+        }
+      } else {
+        document.getElementById('summary-message').innerText = 'You need at least 6/10 to proceed. Try again!';
+        document.getElementById('proceed-btn').style.display = 'none';
+        document.getElementById('retry-btn').style.display = 'block';
+        document.getElementById('retry-level').innerText = currentLevel;
+      }
+    }
+
+    function updateScoreboard(userName, levelPassed) {
+      let user = scoreboard.find(u => u.name === userName);
+      if (user) {
+        if (levelPassed > user.highestLevel) user.highestLevel = levelPassed;
+      } else {
+        scoreboard.push({ name: userName, highestLevel: levelPassed });
+      }
+      localStorage.setItem('scoreboard', JSON.stringify(scoreboard));
+    }
+
+    function displayScoreboard() {
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('final-screen').style.display = 'none';
+      document.getElementById('scoreboard').style.display = 'block';
+      const scoreList = document.getElementById('score-list');
+      scoreList.innerHTML = '';
+      const sortedScores = [...scoreboard].sort((a, b) => b.highestLevel - a.highestLevel);
+      sortedScores.forEach((score, index) => {
+        const li = document.createElement('li');
+        li.innerText = `${index + 1}. ${score.name} - Level ${score.highestLevel}`;
+        scoreList.appendChild(li);
+      });
+    }
+
+    // Event Listeners
+    document.getElementById('start-btn').onclick = startQuiz;
+    document.getElementById('view-scoreboard-start').onclick = displayScoreboard;
+    document.getElementById('proceed-btn').onclick = () => {
+      currentLevel++;
+      currentQuestionIndex = 0;
+      currentScore = 0;
+      questionsForLevel = shuffle([...questions[currentLevel - 1]]);
+      document.getElementById('level-summary').style.display = 'none';
+      document.getElementById('quiz-screen').style.display = 'block';
+      displayQuestion();
+    };
+    document.getElementById('retry-btn').onclick = () => {
+      currentQuestionIndex = 0;
+      currentScore = 0;
+      questionsForLevel = shuffle([...questions[currentLevel - 1]]);
+      document.getElementById('level-summary').style.display = 'none';
+      document.getElementById('quiz-screen').style.display = 'block';
+      displayQuestion();
+    };
+    document.getElementById('view-scoreboard-final').onclick = displayScoreboard;
+    document.getElementById('back-to-start').onclick = () => {
+      document.getElementById('scoreboard').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'block';
+    };
+  </script>
+</body>
+</html>
